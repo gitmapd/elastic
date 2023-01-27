@@ -1,46 +1,56 @@
 /*
-Copyright © 2023 Teste
+Copyright © 2023 NAME HERE <EMAIL ADDRESS>
 */
-package cmd
+package elasticsearch
 
 import (
+	"fmt"
+	"log"
 	"os"
+
 	"github.com/spf13/cobra"
+	//"github.com/CanastaWiki/Canasta-CLI-Go/internal/canasta"
+	//"github.com/CanastaWiki/Canasta-CLI-Go/internal/config"
+	//"github.com/CanastaWiki/Canasta-CLI-Go/internal/orchestrators"
 )
 
-// rootCmd represents the base command when called without any subcommands
-var RootCmd = &cobra.Command{
-	Use:   "novo",
-	Short: "A brief description of your application",
-	Long: `A longer description that spans multiple lines and likely contains
-examples and usage of using your application. For example:
+var (
+	instance config.Installation
+	pwd      string
+	err      error
+)
+
+// indexCmd represents the index command
+func indexCmdCreate() *cobra.Command {
+	var indexCmd = &cobra.Command{
+		Use:   "index",
+		Short: "A brief description of your command",
+		Long: `A longer description that spans multiple lines and likely contains examples
+and usage of using your command. For example:
 
 Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
-	// Uncomment the following line if your bare application
-	// has an action associated with it:
-	// Run: func(cmd *cobra.Command, args []string) { },
-}
-
-// Execute adds all child commands to the root command and sets flags appropriately.
-// This is called by main.main(). It only needs to happen once to the rootCmd.
-func Execute() {
-	err := RootCmd.Execute()
-	if err != nil {
-		os.Exit(1)
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			instance, err = canasta.CheckCanastaId(instance)
+			return err
+		},
+		Run: func(cmd *cobra.Command, args []string) {
+			ElasticIndex(instance)
+		},
 	}
+
+	if pwd, err = os.Getwd(); err != nil {
+		log.Fatal(err)
+	}
+	indexCmd.PersistentFlags().StringVarP(&instance.Id, "id", "i", "", "Canasta instance ID")
+	indexCmd.PersistentFlags().StringVarP(&instance.Path, "path", "p", pwd, "Canasta installation directory")
+	return indexCmd
 }
 
-func init() {
-	// Here you will define your flags and configuration settings.
-	// Cobra supports persistent flags, which, if defined here,
-	// will be global for your application.
+func ElasticIndex(instance config.Installation) {
+	fmt.Println("Running maintenance jobs")
+	orchestrators.Exec(instance.Path, instance.Orchestrator, "web", "php extensions/CirrusSearch/maintenance/UpdateSearchIndexConfig.php")
+	fmt.Println("Completed running maintenance jobs")
 
-	// rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.novo.yaml)")
-
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
-	RootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-	RootCmd.AddCommand(elasticsearch.NewCmdCreate())
 }
