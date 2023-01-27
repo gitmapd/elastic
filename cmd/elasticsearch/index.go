@@ -6,19 +6,19 @@ package elasticsearch
 import (
 	"fmt"
 	"log"
-	"os/exec"
+	"os"
 
 	"github.com/spf13/cobra"
+	//"github.com/CanastaWiki/Canasta-CLI-Go/internal/canasta"
+	//"github.com/CanastaWiki/Canasta-CLI-Go/internal/config"
+	//"github.com/CanastaWiki/Canasta-CLI-Go/internal/orchestrators"
 )
 
-func execs() {
-	cmd := exec.Command("ls", "-lr")
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		log.Fatalf("cmd.Run() failed with %s\n", err)
-	}
-	fmt.Printf("combined out:\n%s\n", string(out))
-}
+var (
+	instance config.Installation
+	pwd      string
+	err      error
+)
 
 // indexCmd represents the index command
 func indexCmdCreate() *cobra.Command {
@@ -31,9 +31,26 @@ and usage of using your command. For example:
 Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			instance, err = canasta.CheckCanastaId(instance)
+			return err
+		},
 		Run: func(cmd *cobra.Command, args []string) {
-			execs()
+			ElasticIndex(instance)
 		},
 	}
+
+	if pwd, err = os.Getwd(); err != nil {
+		log.Fatal(err)
+	}
+	indexCmd.PersistentFlags().StringVarP(&instance.Id, "id", "i", "", "Canasta instance ID")
+	indexCmd.PersistentFlags().StringVarP(&instance.Path, "path", "p", pwd, "Canasta installation directory")
 	return indexCmd
+}
+
+func ElasticIndex(instance config.Installation) {
+	fmt.Println("Running maintenance jobs")
+	orchestrators.Exec(instance.Path, instance.Orchestrator, "web", "php extensions/CirrusSearch/maintenance/UpdateSearchIndexConfig.php")
+	fmt.Println("Completed running maintenance jobs")
+
 }
