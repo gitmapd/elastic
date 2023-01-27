@@ -5,8 +5,6 @@ package cmd
 
 import (
 	"os"
-
-	"github.com/gitmapd/elastic/cmd/elasticsearch"
 	"github.com/spf13/cobra"
 )
 
