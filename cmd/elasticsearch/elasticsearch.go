@@ -5,6 +5,9 @@ package elasticsearch
 
 import (
 	"fmt"
+        "github.com/CanastaWiki/Canasta-CLI-Go/internal/canasta"
+        "github.com/CanastaWiki/Canasta-CLI-Go/internal/config"
+        "github.com/CanastaWiki/Canasta-CLI-Go/internal/orchestrators"
 
 	"github.com/spf13/cobra"
 )
